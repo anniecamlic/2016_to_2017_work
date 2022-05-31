@@ -1,0 +1,264 @@
+# Error Correction
+# CSE1010 Homework 6, Spring 2018
+# Annie Camlic
+# 3/29/18
+# TA: Yijue Wang
+# Section:002 
+# Instructor: Jeffrey A. Meunier
+from errorDetection import *
+
+def string2bin(str0):
+    '''this function takes a string and converts each character into a list of its
+    binary representation and stores it into a list, the list has as many
+    indeces as the length of the string''' 
+    strLen = len(str0)
+    masterList = []
+    for char in range(strLen) :
+        newBinList = char2bin(str0[char])
+        masterList.append(newBinList)
+    return masterList
+
+def segmentString(str0,fillChar):
+    '''This function takes any string and a fill character
+    and returns a list of 8-character strings with any
+    extra space filled by the fill character'''
+    length = len(str0)
+    fullList = []
+    iterations = int(length / 8)
+    x1 = 0
+    x2 = 8
+    if (length % 8 == 0):
+        for x in range(iterations):
+            snippet = str0[x1:x2]
+            x1 = x1 + 8
+            x2 = x2 + 8
+            fullList.append(snippet)
+
+    if (length % 8 != 0):
+        for x in range(iterations):
+            snippet = str0[x1:x2]
+            x1 = x1 + 8
+            x2 = x2 + 8
+            fullList.append(snippet)
+        start = x1 
+        str2 = str0[start:]
+        fullList.append(str2.ljust(8,fillChar))
+
+    elif (length < 8):
+        fullList.append(str0.ljust(8,fillChar))
+                        
+
+    return fullList
+
+def printFrames(frames):
+    '''This function simply prints
+    the frames that it is sent'''
+    frameN = 0
+    for frame in frames:
+        print("frame", frameN)
+        charN = 0
+        for bin in frame:
+            char = bin2char(bin)
+            print(f"{charN:2}", bin, char)
+            charN += 1
+        frameN += 1
+        print()
+
+def string2frames(str0,char):
+    '''This function takes a string of any length and a fill character,
+    and cuts the string it into 8-character segments using the segmentString
+    function, then calls the string2bin function on each segment. The result
+    of each call to string2bin is a frame, so you must append each of these
+    frames to a list of frames.'''
+    masterList = []
+    segString = segmentString(str0,char)
+    for x in range(len(segString)):
+        oneList = string2bin(segString[x])
+        masterList.append(oneList)
+    return masterList
+
+def appendParityColumn(list0,desPar):
+    '''This function accepts a frame (a list of bit lists)
+    and a desired parity. It appends a parity bit to each
+    list in the frame.'''
+    MasterL =[]
+    for x in range(len(list0)):
+        ParityList = appendParity(list0[x],desPar)
+        MasterL.append(list0[x])
+    return MasterL
+
+def transpose(lst):
+    '''The rows become columns and the columns become rows.'''
+    lst = list(map(list, zip(*lst)))
+    return lst
+
+def appendParityRow(frame,desPar):
+    '''This function takes a frame and a desired parity,
+    and adds a 9th row of bits that are the parity bits'''
+    # of the columns of the frame.
+    frame1 = transpose(frame)
+    frame1  = appendParityColumn(frame1,desPar)
+    frame2 = transpose(frame1)
+    return frame2
+
+def appendParityToFrame(frame,desPar):
+    '''This function takes a normal 8x8 frame (8 rows of 8 bits) and
+    a desired parity, and returns a 9x9 frame that has both a column
+    and a row of parity bits appended to it.'''
+    firstFrame = appendParityColumn(frame,desPar)
+    finalFrame = appendParityRow(firstFrame,desPar)
+    return finalFrame
+
+def appendParityToFrames(frameList,desPar):
+    '''appendParityToFramesThis function takes a list of frames and
+    a desired parity, and it appends a parity row and column to each frame
+    in the list and returns the new list of frames.'''
+    finalList = []
+    for x in range(len(frameList)):
+        finalList.append(appendParityToFrame(frameList[x],desPar))
+    return finalList
+
+def transmitFrames(frameList,errorProb):
+    '''This function takes a list of frames and an error probability
+    from 0 to 1. Call the addNoisefunction (from the previous project)
+    on each row of each frame, with the given error probability. Collect
+    the new rows into a new frame, and collect the new frames into a new
+    list of frames. Total up the number of bits flipped in all the frames.'''
+    newFrame = []
+    finalList = []
+    counter = 0
+    flippedBits = 0
+    for frame in frameList:
+        newFrame = []
+        for row in frame:
+            (newList,counter) = addNoise(row,errorProb)
+            newFrame.append(newList)
+            flippedBits += counter
+        finalList.append(newFrame)
+    print('Flipped Bits: ',flippedBits)
+    return finalList
+
+def splitFrame(frame):
+    '''This function takes a 9x9 frame and splits the frame into 3 pieces:
+    the payload (the upper left 8x8 matrix of data bits), the parity column
+    (but only rows 1 - 8), and the parity row (all 9 columns)'''
+    payload = []
+    parityCol = []
+    parityRow = frame[8]
+    for row in frame[0:8]:
+        payload.append(row[0:8])
+        parityCol.append(row[8])
+    return (payload,parityCol,parityRow)
+
+
+def checkParityOfFrame(frame,desPar):
+    '''This function must re-calculate the parity of the 8x8 payload
+        and compare it to the column and row parity that was sent as
+        part of the 9x9 frame. If the parity does not match in any location,
+        then an error has been detected'''
+    recalculatedFrame = []
+    rowError = []
+    colError = []
+    (newPayload,receivedParityCol,receivedParityRow) = splitFrame(frame)
+    recalculatedFrame = appendParityToFrame(newPayload,desPar)
+    (payload2,recalculatedParityCol,recalculatedParityRow) = splitFrame(recalculatedFrame)
+
+    for index in range(len(receivedParityCol)):
+        if receivedParityCol[index] != recalculatedParityCol[index]:
+            rowError.append(index)
+    for index1 in range(len(receivedParityRow)):
+        if receivedParityRow[index1] != recalculatedParityRow[index1]:
+            colError.append(index1)
+    return (colError,rowError)
+
+def repairFrame(frame, colErrors, rowErrors):
+    '''Tis function takes a 9x9 frame, a list of error columns,
+    a list of error rows, and tries to repair the frame.
+    The error columns and error rows are the lists returned by the
+    checkParityOfFrame function'''
+    if len(colErrors) and len(rowErrors) == 0:
+        return 'NO ERRORS'
+    elif (len(rowErrors) == 1) and (len(colErrors) == 2) :
+        if colErrors[1] == 8:
+                if frame[rowErrors[0]][colErrors[0]] == 1 :
+                    frame[rowErrors[0]][colErrors[0]]= 0
+                    
+                elif frame[rowErrors[0]][colErrors[0]] == 0:
+                    frame[rowErrors[0]][colErrors[0]] = 1
+        return 'Corrected'
+    elif len(colErrors) or len(rowErrors) == 0:
+        return 'PARITY ERROR'
+    return 'NOT CORRECTED'
+
+def repairFrames(frameList, desPar):
+    '''This function takes a list of 9x9 frames and a desired parity.
+        It returns list of repair statuses,one for each frame.'''
+    status = []
+    for frame in range(len(frameList)):
+        (colError, rowError) = checkParityOfFrame(frameList[frame],desPar)
+        stat = repairFrame(frameList[frame],colError,rowError)
+        status.append(stat)
+        if stat == 'NO ERRORS':
+            print('Frame ', frame ,'has no errors')
+        elif stat == 'Corrected':
+            print('Frame ' ,frame ,'has been repaired')
+        elif stat == 'NOT CORRECTED':
+            print('Frame' ,frame ,'coud not be repaired')
+    print(status)
+    return status
+
+
+def stripFrames(frameList):
+    '''This function takes a list of 9x9 frames and removes
+       the parity row and column, returning a list of 8x8
+       payload-only frames.'''
+    newFrame = []
+    finalList = []
+    for frame in frameList:
+        newFrame = []
+        for row in frame[0:8]:
+            newFrame.append(row[0:8])
+        finalList.append(newFrame)
+    return finalList
+    
+
+def bin2string(frame, fillChar):
+    ''' This function takes a frame of bits and a fill character and turns the
+    frame into a string '''
+    newString = ''
+    for row in frame :
+        char = bin2char(row)
+        if char != fillChar :
+            newString = newString + char
+        elif char == fillChar :
+            break
+    return newString
+
+def frames2string(frameList,fillChar):
+    '''This function takes frames character and turns it into a
+    string'''
+    finalString = ''
+    stringList = []
+    for frame in frameList:
+        tempString = bin2string(frame,fillChar)
+        stringList.append(tempString)
+    final = finalString.join(stringList)
+    return final
+
+
+    
+            
+def main():
+    '''main function''' 
+    errorProb = 0.01
+    desiredParity = 0 #even
+    fillChar = '~' #tilde
+    userString = input('Please enter a string: ')
+    frames = string2frames(userString,fillChar)
+    transmittedFrames = appendParityToFrames(frames,desiredParity)
+    receivedFrames = transmitFrames(transmittedFrames,errorProb)
+    repairStatuses = repairFrames(receivedFrames,desiredParity)
+    strippedFrames = stripFrames(receivedFrames)
+    newWord = frames2string(strippedFrames,fillChar)
+    print(newWord)
+    print(repairStatuses)
