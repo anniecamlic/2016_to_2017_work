@@ -1,0 +1,59 @@
+#the name of this project is HW3-Calculator.py
+#Course number
+#Name: Annie Camlic
+# Project Name: Calculator
+# Course Number : CSE 1010
+# Name: Annie Camlic
+#TA Name: Sujay Alavala  Section Number: 002
+#Date: 1/29/17
+
+import math
+contin = True
+accumulator = 0.0
+userNum = 0
+
+while (contin):
+    print('Accumulator: ',accumulator)
+    print('Please choose one of the following options: ')
+    print('1) Addition')
+    print('2) Subtraction')
+    print('3) Multiplication')
+    print('4) Division')
+    print('5) Square Root')
+    print('6) Clear')
+    print('0) Exit')
+    option = int(input('What is your option? '))
+    if option == 0:
+        contin = False
+    elif option == 1:
+        #do addition
+        addNumber = float(input('Enter a number: '))
+        accumulator = addNumber + accumulator
+    elif option == 2:
+        #do subtraction
+        subNumber = float(input('Enter a number: '))
+        accumulator = accumulator - subNumber
+    elif option == 3:
+        #do multiplication
+        multNumber = float(input('Enter a number: '))
+        accumulator = multNumber * accumulator
+    elif option == 4:
+        #do division
+        divNumber = float(input('Enter a number: '))
+        if divNumber == 0:
+            print('no division by 0.')
+        else:
+            accumulator = accumulator / divNumber
+    elif option == 5:
+        #square root
+        if accumulator >= 0 :
+            accumulator = math.sqrt(accumulator)
+        else:
+            print('Cannot take the square root of a negative number.')
+            
+    elif option == 6:
+        #clear
+        accumulator = 0.0
+    else:
+        print('Illegal Option: ',option)
+print('Program Finished.')
