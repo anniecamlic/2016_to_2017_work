@@ -1,0 +1,123 @@
+ # Error Detection
+# CSE1010 Homework 5, Spring 2018
+# Annie Camlic
+# 2/26/18
+# TA: Yijue Wang
+# Section:002 
+# Instructor: Jeffrey A. Meunier
+import random 
+
+def getChar():
+    word = input('Enter a character: ')
+    return word[0]
+
+#converts a character to a binary representation of that character
+def char2bin(char):
+    dec = ord(char)
+    binString = bin(dec)
+    a = 2
+    b = 7
+    newBinString = binString[2:]
+    filledString = newBinString.zfill(8)
+    #print(filledString)
+    BinaryList = []
+    n = 0
+    while n < 8:
+        BinaryList.append(int(filledString[n]))
+        n = n+1
+
+    return BinaryList
+#opposite of char2bin
+def bin2char(bins):
+    index = 0
+    charList = []
+    while index < len(bins):
+        newString = str(bins[index])
+        charList.append(newString)
+        index = index +1
+    joinedString = ''.join(charList)
+    newInt = int(joinedString,2)
+    newChar = chr (newInt)
+    #print(newChar)
+    return newChar
+
+def parityOf(list1,parity):
+    oneCount = 0
+    index = 0
+    while index < len(list1):
+        if list1[index] == 1:
+            oneCount = oneCount + 1
+        index = index + 1
+
+    if (oneCount % 2) == 0:
+        if parity == 0:
+            return 0
+    if (oneCount % 2) == 0:
+        if parity == 1:
+            return 1
+    if (oneCount % 2) != 0:
+        if parity == 1:
+            return 0
+    if (oneCount % 2) != 0:
+        if parity == 0:
+            return 1
+
+#addsParity
+def appendParity(list1,desiredParity):
+    list1.append(parityOf(list1,desiredParity))
+    return list1
+
+#flips bits based on error probability and random number
+def addNoise(list1,probError):
+    flippedBits = 0
+    list2=[]
+    list2 = [list1[n] for n in range(len(list1))]
+    #list2 = list1
+    for n in range(len(list1)):
+        rand = random.random()
+        if rand < probError:
+            if list1[n] == 0:
+                    list2[n] = 1
+            elif list1[n] == 1:
+                    list2[n] = 0
+            flippedBits = flippedBits + 1
+    return (list2,flippedBits)
+
+def checkParity(list1,desiredpar):
+    newList = []
+    newList = list1[:7]
+    parity = parityOf(newList,desiredpar)
+    
+
+    
+    if parity == list1[8]  :
+        return True
+
+    if parity != list1[8] :
+        #errors
+        return False
+
+def main():
+    errorProb = 0.1
+    desParity = 0
+    word = input('Enter a character: ')
+    char = word[0]    
+    
+    binList = char2bin(char)
+    newList = appendParity(binList,desParity)
+    (l,n) = addNoise(newList,errorProb)
+    error = checkParity(l,desParity)
+    print('Transmitted bits ',binList)
+    print('Number of flipped bits: ',n)
+    print('Recieved bits ',l)
+    if (error == 0):
+        print('No error detected')
+    if(error == 1):
+        print('Error detected')
+    binlist2 = []
+    binlist2 = l[:7]
+    finalChar = bin2char(binlist2)
+    print('Received character: ', finalChar)
+
+if __name__ == '__main__':  main()    
+    
