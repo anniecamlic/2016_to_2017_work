@@ -1,0 +1,145 @@
+# N-Body Simulation
+# CSE1010 Homework 4, Spring 2018
+# Annie Camlic
+# 2/12/18
+# TA: Yijue Wang
+# Section:002 
+# Instructor: Jeffrey A. Meunier
+import math 
+import random
+import time
+import turtle
+
+NBodies = 10
+G = 5
+SpaceRadius = 250
+MinMass = 5
+MaxMass = 100
+MaxVelocity = 100
+BodyColor = 'pink'
+TraceColor = 'black'
+
+Turtles = []
+Masses = []
+Xs = []
+Ys = []
+Vxs = []
+Vys = []
+
+OffScreen = []
+WinX2 = 0
+WinY2 = 0
+
+def newTurtle():
+  	  T = turtle.Turtle()
+  	  Turtles.append(T)
+  	  T.speed(0)
+   	  T.pensize(5)
+   	  return T
+
+def printBodyInfo(n):
+    		print('Body',n, 'mass = ', Masses[n], 'x = ', Xs[n], 'y = ',Ys[n], 'vx = ',
+        		  Vxs[n], 'vy = ',Vys[n])
+
+def initBody(turt):
+  randMass = random.randint(MinMass,MaxMass)
+ 		  Masses.append(randMass)
+  		  turt.turtlesize(randMass * .03,randMass * .03)
+  		  turt.shape('circle')
+   		  randX = random.randint(-SpaceRadius,SpaceRadius)
+    		  Xs.append(randX)
+    		  randY = random.randint(-SpaceRadius,SpaceRadius)
+   		  Ys.append(randY)
+  		  randXV = random.randint(-MaxVelocity,MaxVelocity)
+  		  randXV = randXV/100
+  		  Vxs.append(randXV)
+  		  randYV = random.randint(-MaxVelocity,MaxVelocity)
+  		  randYV = randYV/100
+  		  Vys.append(randYV)
+  		  OffScreen.append(False)
+  		  turt.penup()
+  		  turt.goto(randX,randY)
+  		  turt.pendown()
+
+def setup():
+    			turtle.tracer(0,0)
+    			for n in range(0,NBodies) :
+        				newT = newTurtle()
+        				initBody(newT)
+        				printBodyInfo(n)
+    			turtle.update()
+
+def moveBody(bodyNum):
+    			newX = Xs[bodyNum] + Vxs[bodyNum]
+    			newY = Ys[bodyNum] + Vys[bodyNum]
+    			Xs[bodyNum] = newX
+    			Ys[bodyNum] = newY
+    			currentTurt = Turtles[bodyNum]
+    			currentTurt.hideturtle()
+    			currentTurt.color(TraceColor)
+    			currentTurt.goto(newX,newY)
+    			currentTurt.color(BodyColor)
+    			currentTurt.showturtle()
+    			if newX < -WinX2 or newX > WinX2 or newY < -WinY2 or
+ newY >            WinY2 :
+        				OffScreen[bodyNum] = True
+
+
+def moveBodies():
+    			for n in range(0,NBodies):
+       				 t = Turtles[n]
+        				if t is not None :
+            				moveBody(n)
+
+def calculateForce(body1,body2):
+    			mass1 =  Masses[body1]
+    			mass2 =  Masses[body2]
+  	  	            x1 = Xs[body1]
+    			x2 = Xs[body2]
+    			y1 = Ys[body1]
+    			y2 = Ys[body2]
+    			diffx = x2 - x1
+    			diffy = y2 - y1
+    			disR = math.sqrt((diffx ** 2) + (diffy ** 2))
+    			force = G * ((mass1 * mass2) / (disR ** 2))
+    			angle = math.atan2(diffy,diffx)
+    			fx = force * math.cos(angle)
+    			fy = force * math.sin(angle)
+    			return fx, fy
+
+def accelerateBody(bodyNum):
+    			for n in range(0,NBodies):
+       				 if n is not bodyNum :
+            				xForce, yForce = calculateForce(n,bodyNum)
+            				xAccel = (xForce / Masses[bodyNum])
+            				yAccel = (yForce / Masses[bodyNum])
+            				Vxs[bodyNum] = (xAccel + Vxs[bodyNum])
+            				Vys[bodyNum] = (yAccel + Vys[bodyNum])
+
+def accelerateBodies():
+    			for n in range(0,NBodies):
+        			t = Turtles[n]
+        				if t is not None :
+            				accelerateBody(n)
+
+    
+    
+
+def main():
+    			print('N-Body simulation starting')
+    			screen = turtle.Screen()
+    			screen.title('N-Body Simulator')
+    			global WinX2, WinY2
+    			WinX2 = screen.window_width() / 2
+    			WinY2 = screen.window_height() / 2
+    			setup()
+    			while not all (OffScreen):
+        			moveBodies()
+        			accelerateBodies()
+        			turtle.update()
+    			print('Program finished')
+    			screen.mainloop()
+if __name__ == '__main__':
+        				main()
+
+
