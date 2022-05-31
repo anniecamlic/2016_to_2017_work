@@ -1,0 +1,171 @@
+from digital import *
+from analog import *
+import time 
+class ArduinoSim:
+    ''' A class tht simulates the Arduino'''
+    _numAnalogs = 6
+    _numDigitals = 14
+
+    def __init__(self):
+        '''initializing method, this is wha tthe programgoes to when an
+            instance of this class is created'''
+        self._analogs = []
+        self._digitals = []
+        for n in range(self._numAnalogs):
+            self._analogs.append(Analog())
+
+        for m in range(self._numDigitals):
+            self._digitals.append(Digital())
+
+    def ar(self,pinNum):
+        '''reads analog'''
+        if (pinNum >=0) and(pinNum < self._numAnalogs):
+            return self._analogs[pinNum].read()
+
+    def aw(self,pinNumber,value):
+        '''writes to an analog pin'''
+        if (pinNumber >=0) and(pinNumber < self._numAnalogs):
+            self._analogs[pinNumber].write(value)
+
+
+        
+    def dr(self,pinNum):
+        '''reads the values from a digital pin'''
+        if (pinNum >=0) and(pinNum < self._numDigitals) :
+            return self._digitals[pinNum].read()
+        
+    def dw(self,pinNumber,value):
+        '''writes a valie to a digital pin'''
+        if (pinNumber >=0) and(pinNumber < self._numDigitals):
+            self._digitals[pinNumber].write(value)
+        if pinNumber == 13:
+            pin = self._digitals[13]
+            if (pin.read() == 1):
+                print('LED is on')
+            elif (pin.read() ==0): 
+                print('LED is off')
+
+    def dm(self,pinNumber,modeValue):
+        '''sets the mode of a digital pin'''
+        if (pinNumber >=0) and(pinNumber < self._numDigitals):
+            self._digitals[pinNumber].set_mode(modeValue)
+
+def blink(self):
+    '''makes a pin blink, or go on and off'''
+    self._digitals[13]._digPinMode = 1
+    for x in range(5):
+        self._digitals[13]._digPinVal = 1
+        print('LED if ON')
+        time.sleep(1)
+        self._digitals[13]._digPinVal = 0
+        print('LED is OFF')
+        time.sleep(1)
+
+import threading
+def start_potentiometer(arduino):
+    def run():
+        delay = 0.002
+        while True:
+            # count up from 0 to 1023
+            for n in range(1024):
+                # you may need to use a variable name other than
+                # _analogs, depending on what you called it
+                arduino._analogs[0].set_value(n)
+                time.sleep(delay)
+            # count down from 1023 to 0
+            for n in range(1023, -1, -1):
+                arduino._analogs[0].set_value(n)
+                time.sleep(delay)
+    thread = threading.Thread(target=run)
+    thread.start()
+
+def main():
+    '''That function simulates a person turning the
+        potentiometer from one side to the other and then
+        back again, over and over without stopping.'''
+    ard = ArduinoSim()
+    start_potentiometer(ard)
+    for n in range(10):
+        print(n, ':', ard.ar(0))
+        time.sleep(1)
+ANALOG CLASS:
+import random
+class Analog:
+    '''the  Analog  class  will  represent  an
+        analog  pin  on  the  Arduino.  The  analog
+        pin  can  be  set  to  a  value  from  0  to  255,
+        and  the  value  that  is  read  in  will  range
+        from  0  to  1023'''
+
+    def __init__(self):
+        self._value = 0
+        for n in range(16):
+            self._value += random.randint(0,63)
+
+    def read(self):
+        '''Trivial:  just  return  the  value
+        of  this  analog  pin'''
+        return self._value
+
+    def write(self,value):
+        '''The  argument  value  must  be  in  the
+        range  0  to  255.  If  it  is  less  than  0,
+        then  force  the  value  to  be  0  instead.
+        If  it  is  greater  than  255,  then  force
+        it  to  be  255.  Then  convert  that  value
+        into  the  range  0  to  1020.  Set  the  analog
+        pin's  value  to  be  this  value'''
+        if value <= 0 :
+            self._value = 0
+        elif value > 255:
+            self.value = 255
+        elif(value<255) and (value>0):
+            self._value = value * 4
+
+    def set_value(self,value):
+        '''This  is  a  method  that  will  be  used  by
+        "external"  programs  that  want  to  simulate  setting
+        the  analog  pin  to  some  value. '''
+        if value <= 0 :
+            value = 0
+        elif value > 1023:
+            value = 1023
+        self._value = value
+        
+DIGITAL CLASS: 
+class Digital:
+    '''he  Arduino  simulator  class  that
+        you  will  write  later  will  contain
+        a  collection  of  14  digital  pins  that
+        are  numbered  0  to  13. '''
+    def __init__(self):
+        self._digPinVal = 0
+        self._digPinMode = 0
+
+    def set_mode(self,modeValue):
+        '''This  method  sets  the  mode  of  this
+        instance  to  either  0  or  1.  The  value
+        for  the  mode  will  be  a  parameter'''
+        self._digPinMode = modeValue
+
+    def read(self):
+        '''Returns  the  value  of  the  pin.
+            This  will  be  either  a  0  or  a  1'''
+        return self._digPinVal
+
+    def write(self,mode):
+        '''If  the  mode  of  the  pin  is  write
+        (which  is  a  1),  then  set  the  value
+        of  this  pin  to  whatever  the  parameter
+        is.  If  the  mode  is  read,  then  the  pin's
+        value  should  not  change'''
+        self._digPinVal = mode
+
+
+
+    
+        
+        
+
+
+
